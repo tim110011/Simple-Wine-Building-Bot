@@ -1,0 +1,12 @@
+diff --git a/dlls/dsound/dsound.c b/dlls/dsound/dsound.c
+index a8b20b1..5dd2347 100644
+--- a/dlls/dsound/dsound.c
++++ b/dlls/dsound/dsound.c
+@@ -385,6 +385,7 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
+ 
+     device->thread_finished = CreateEventW(0, 0, 0, 0);
+     device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
++    usleep(100000);
+     SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
+ 
+     *ppDevice = device;
