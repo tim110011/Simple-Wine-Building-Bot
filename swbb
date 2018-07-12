@@ -3,29 +3,39 @@
 #  Simple Wine Building Bot -- swbb
 #    automatic wine, wine-staging, wine-pba download, patch, build, install script
 
+#version=0.4
+
 #    fedora:
 #        sudo dnf group install "C Development Tools and Libraries"
 #        sudo dnf install glibc-devel.{i686,x86_64}
 #        sudo dnf builddep wine (only install 64bit dependencies, copy that 64bit info and do some find & replace and manual resolve conflict package to get 32bit)
 #
-#        sudo dnf install ImageMagick-libs.{x86_64,i686} OpenEXR-libs.{x86_64,i686} SDL2-devel.{x86_64,i686} alsa-lib-devel.{x86_64,i686} audiofile.{x86_64,i686} audiofile-devel.{x86_64,i686} autotrace.{x86_64,i686} bzip2-devel.{x86_64,i686} cairo-devel.{x86_64,i686} check.{x86_64,i686} check-devel.{x86_64,i686} chrpath cmake-filesystem.{x86_64,i686} cups-devel.{x86_64,i686} dbus-devel.{x86_64,i686} expat-devel.{x86_64,i686} fontconfig-devel.{x86_64,i686} fontforge.{x86_64,i686} fontpackages-devel.noarch freeglut-devel.{x86_64,i686} freetype-devel.{x86_64,i686} gdk-pixbuf2-devel.{x86_64,i686} gettext-common-devel.noarch gettext-devel.{x86_64,i686} giflib.{x86_64,i686} giflib-devel gl-manpages.noarch glib2-devel.{x86_64,i686} glibc-devel.{x86_64,i686} glibc-headers.{x86_64,i686} gmp-c++.{x86_64,i686} gmp-devel.{x86_64,i686} gnutls-c++.{x86_64,i686} gnutls-dane.{x86_64,i686} gnutls-devel.{x86_64,i686} gsm-devel.{x86_64,i686} icoutils ilmbase.{x86_64,i686} isdn4k-utils-devel.{x86_64,i686} keyutils-libs-devel.{x86_64,i686} krb5-devel.{x86_64,i686} lcms2-devel.{x86_64,i686} libEMF.{x86_64,i686} libICE-devel.{x86_64,i686} libSM-devel.{x86_64,i686} libX11-devel.{x86_64,i686} libXau-devel.{x86_64,i686} libXcomposite-devel.{x86_64,i686} libXcursor-devel.{x86_64,i686} libXdamage-devel.{x86_64,i686} libXext-devel.{x86_64,i686} libXfixes-devel.{x86_64,i686} libXi-devel.{x86_64,i686} libXinerama-devel.{x86_64,i686} libXmu-devel.{x86_64,i686} libXrandr-devel.{x86_64,i686} libXrender-devel.{x86_64,i686} libXt-devel.{x86_64,i686} libXxf86dga-devel.{x86_64,i686} libXxf86vm-devel.{x86_64,i686} libcom_err-devel.{x86_64,i686} libdrm-devel.{x86_64,i686} libexif-devel.{x86_64,i686} libgcrypt-devel.{x86_64,i686} libglvnd-core-devel.{x86_64,i686} libglvnd-devel.{x86_64,i686} libgpg-error-devel.{x86_64,i686} libgphoto2-devel.{x86_64,i686} libieee1284-devel.{x86_64,i686} libjpeg-turbo-devel.{x86_64,i686} libkadm5.{x86_64,i686} libpcap-devel.{x86_64,i686} libpciaccess-devel.{x86_64,i686} libpng-devel.{x86_64,i686} librsvg2-devel.{x86_64,i686} libselinux-devel.{x86_64,i686} libsepol-devel.{x86_64,i686} libspiro.{x86_64,i686} libtasn1-devel.{x86_64,i686} libtiff-devel.{x86_64,i686} libuninameslist.{x86_64,i686} libusb-devel.{x86_64,i686} libusbx-devel.{x86_64,i686} libuuid-devel.{x86_64,i686} libv4l-devel.{x86_64,i686} libverto-devel.{x86_64,i686} libxcb-devel.{x86_64,i686} libxcrypt-devel.{x86_64,i686} libxml2-devel.{x86_64,i686} libxslt-devel  mesa-libEGL-devel.{x86_64,i686} mesa-libGL-devel.{x86_64,i686} mesa-libGLES-devel.{x86_64,i686} mesa-libGLU-devel.{x86_64,i686} mesa-libOSMesa-devel.{x86_64,i686} mpg123-devel.{x86_64,i686} ncurses-c++-libs.{x86_64,i686} ncurses-devel.{x86_64,i686} nettle-devel.{x86_64,i686} ocl-icd-devel.{x86_64,i686} openal-soft-devel.{x86_64,i686} opencl-headers.noarch openldap-devel orc-compiler orc-devel.{x86_64,i686} p11-kit-devel.{x86_64,i686} pcre-cpp.{x86_64,i686} pcre-devel.{x86_64,i686} pcre-utf16.{x86_64,i686} pcre-utf32.{x86_64,i686} pcre2-devel.{x86_64,i686} pcre2-utf32.{x86_64,i686} perl-Fedora-VSP.noarch perl-generators.noarch pixman-devel.{x86_64,i686} plotutils.{x86_64,i686} pstoedit.{x86_64,i686} pulseaudio-libs-devel.{x86_64,i686} sane-backends-devel.{x86_64,i686} subunit.{x86_64,i686} subunit-devel.{x86_64,i686} systemd-devel.{x86_64,i686} unixODBC-devel.{x86_64,i686} valgrind-devel.{x86_64,i686} vulkan-devel.{x86_64,i686} xorg-x11-proto-devel.noarch xz-devel.{x86_64,i686} libva-devel.{x86_64,i686} gstreamer1.{i686,x86_64} gstreamer1-devel.{i686,x86_64} gstreamer1-plugins-base.{i686,x86_64} gstreamer1-plugins-base-devel.{i686,x86_64} gstreamer1-plugins-good.{i686,x86_64} gstreamer1-plugins-good-extras.{i686,x86_64} gstreamer1-plugins-ugly.{i686,x86_64} gstreamer1-plugins-ugly-free.{i686,x86_64} gstreamer1-plugins-ugly-free-devel.{i686,x86_64}
-#        32bit configure will still complain: "gstreamer-1.0 base plugins 32-bit development files not found"
+#        sudo dnf install ImageMagick-libs.{x86_64,i686} OpenEXR-libs.{x86_64,i686} SDL2-devel.{x86_64,i686} alsa-lib-devel.{x86_64,i686} audiofile.{x86_64,i686} audiofile-devel.{x86_64,i686} autotrace.{x86_64,i686} bzip2-devel.{x86_64,i686} cairo-devel.{x86_64,i686} check.{x86_64,i686} check-devel.{x86_64,i686} chrpath cmake-filesystem.{x86_64,i686} cups-devel.{x86_64,i686} dbus-devel.{x86_64,i686} expat-devel.{x86_64,i686} fontconfig-devel.{x86_64,i686} fontforge.{x86_64,i686} fontpackages-devel.noarch freeglut-devel.{x86_64,i686} freetype-devel.{x86_64,i686} gdk-pixbuf2-devel.{x86_64,i686} gettext-common-devel.noarch gettext-devel.{x86_64,i686} giflib.{x86_64,i686} giflib-devel gl-manpages.noarch glib2-devel.{x86_64,i686} glibc-devel.{x86_64,i686} glibc-headers.{x86_64,i686} gmp-c++.{x86_64,i686} gmp-devel.{x86_64,i686} gnutls-c++.{x86_64,i686} gnutls-dane.{x86_64,i686} gnutls-devel.{x86_64,i686} gsm-devel.{x86_64,i686} icoutils ilmbase.{x86_64,i686} isdn4k-utils-devel.{x86_64,i686} keyutils-libs-devel.{x86_64,i686} krb5-devel.{x86_64,i686} lcms2-devel.{x86_64,i686} libEMF.{x86_64,i686} libICE-devel.{x86_64,i686} libSM-devel.{x86_64,i686} libX11-devel.{x86_64,i686} libXau-devel.{x86_64,i686} libXcomposite-devel.{x86_64,i686} libXcursor-devel.{x86_64,i686} libXdamage-devel.{x86_64,i686} libXext-devel.{x86_64,i686} libXfixes-devel.{x86_64,i686} libXi-devel.{x86_64,i686} libXinerama-devel.{x86_64,i686} libXmu-devel.{x86_64,i686} libXrandr-devel.{x86_64,i686} libXrender-devel.{x86_64,i686} libXt-devel.{x86_64,i686} libXxf86dga-devel.{x86_64,i686} libXxf86vm-devel.{x86_64,i686} libcom_err-devel.{x86_64,i686} libdrm-devel.{x86_64,i686} libexif-devel.{x86_64,i686} libgcrypt-devel.{x86_64,i686} libglvnd-core-devel.{x86_64,i686} libglvnd-devel.{x86_64,i686} libgpg-error-devel.{x86_64,i686} libgphoto2-devel.{x86_64,i686} libieee1284-devel.{x86_64,i686} libjpeg-turbo-devel.{x86_64,i686} libkadm5.{x86_64,i686} libpcap-devel.{x86_64,i686} libpciaccess-devel.{x86_64,i686} libpng-devel.{x86_64,i686} librsvg2-devel.{x86_64,i686} libselinux-devel.{x86_64,i686} libsepol-devel.{x86_64,i686} libspiro.{x86_64,i686} libtasn1-devel.{x86_64,i686} libtiff-devel.{x86_64,i686} libuninameslist.{x86_64,i686} libusb-devel.{x86_64,i686} libusbx-devel.{x86_64,i686} libuuid-devel.{x86_64,i686} libv4l-devel.{x86_64,i686} libverto-devel.{x86_64,i686} libxcb-devel.{x86_64,i686} libxcrypt-devel.{x86_64,i686} libxml2-devel.{x86_64,i686} libxslt-devel  mesa-libEGL-devel.{x86_64,i686} mesa-libGL-devel.{x86_64,i686} mesa-libGLES-devel.{x86_64,i686} mesa-libGLU-devel.{x86_64,i686} mesa-libOSMesa-devel.{x86_64,i686} mpg123-devel.{x86_64,i686} ncurses-c++-libs.{x86_64,i686} ncurses-devel.{x86_64,i686} nettle-devel.{x86_64,i686} ocl-icd-devel.{x86_64,i686} openal-soft-devel.{x86_64,i686} opencl-headers.noarch openldap-devel orc-compiler orc-devel.{x86_64,i686} p11-kit-devel.{x86_64,i686} pcre-cpp.{x86_64,i686} pcre-devel.{x86_64,i686} pcre-utf16.{x86_64,i686} pcre-utf32.{x86_64,i686} pcre2-devel.{x86_64,i686} pcre2-utf32.{x86_64,i686} perl-Fedora-VSP.noarch perl-generators.noarch pixman-devel.{x86_64,i686} plotutils.{x86_64,i686} pstoedit.{x86_64,i686} pulseaudio-libs-devel.{x86_64,i686} sane-backends-devel.{x86_64,i686} subunit.{x86_64,i686} subunit-devel.{x86_64,i686} systemd-devel.{x86_64,i686} unixODBC-devel.{x86_64,i686} valgrind-devel.{x86_64,i686} vulkan-devel.{x86_64,i686} xorg-x11-proto-devel.noarch xz-devel.{x86_64,i686} libva-devel.{x86_64,i686} gstreamer1*.{i686,x86_64} ffmpeg.{i686,x86_64} ffmpeg-libs.{i686,x86_64} ffmpeg-devel.{i686,x86_64}
 
-#version=0.3
+##  32bit configure MAY still complain: "gstreamer-1.0 base plugins 32-bit development files not found"
+##  some optional packages disabled, edit configure section carefully before run!
 
+# build setting
 build_thread=9 								# CPU logical core +1 for max speed and max cpu usage
 build_mode="interactive" 					# automatic, interactive
-build_version="3.8"
-product="release" 							# git, release, staging, pba. release means tagged like 3.8
-use_custom_patch_1=0 						# 0 or 1
-use_custom_patch_2=0 						# 0 or 1
-custom_patch_1="$HOME/0_wine/fallout4_sound_hack_kimmo.patch" 		# Kimmo's fallout 4 sound patch  https://bugs.winehq.org/show_bug.cgi?id=41271#c1
-custom_patch_2="$HOME/0_wine/fallout4_sound_hack_charles.patch" 		# Charles' fallout 4 sound patch  https://bugs.winehq.org/show_bug.cgi?id=41271#c15
+product="staging" 							# wine, staging, pba.
+tag_version="3.12" 							# version number, also used for dir name. when using with commit hash, it is recommended to name it like "3.12_git_commithash"
+wine_tag="wine-$tag_version" 				# "wine-$tag_version" or commit hash
+staging_tag="v$tag_version" 				# "v$tag_version" or commit hash, if you really want to test staging git
 
+use_custom_patch_1=0 						# 0 or 1
+custom_patch_1="$HOME/your_custom.patch"
+
+# swbb default setting
 git_dir="$HOME/_wine_git"
+if [[ X"$product" == X"wine" ]]; then
+    dir_name="$tag_version"
+else
+    dir_name="$tag_version-$product"
+fi
 build_ts="$(date '+%y-%m-%d-%H-%M')"
-build_dir="$HOME/__wine_build/$build_ts/$build_version-$product" 		# you may want to delete this dir after install
-install_dir="$HOME/_wine_install/$build_ts/$build_version-$product" 	# built wine binary here!
+build_dir="$HOME/__wine_build/$build_ts/$dir_name" 			# you may want to delete this dir after install
+install_dir="$HOME/__wine_install/$build_ts/$dir_name" 		# built wine binary here!
 
 ####################
 
@@ -40,7 +50,7 @@ swbb_pause()
 
 swbb_error()
 {
-    echo "$(basename $0) Fatal: $1" >&2
+    echo "$(basename $0) [ERROR]: $1" >&2
     exit 1
 }
 
@@ -50,7 +60,6 @@ swbb_prepare()
     mkdir -p "$git_dir"
 
     # git wine
-    wine_tag="wine-$build_version"
     cd "$git_dir"
     if [ -d ./wine ]; then
         cd ./wine
@@ -63,19 +72,14 @@ swbb_prepare()
     cd "$git_dir/wine"
     mkdir -p "$build_dir/wine"
 
-    # use git or release tag
-    if [[ X"$product" == X"git" ]] ; then
-        cp -R "$git_dir/wine" "$build_dir"
-    else
-        git archive --format=tar "$wine_tag" | (cd "$build_dir/wine" && tar xf -)
-        if (( "$?" == 1 )); then
-            swbb_error "Error detected, likely wrong wine version."
-	    fi
+    #check wine tag or commit hash
+    if ! (git show "$wine_tag" 1>/dev/null); then
+        swbb_error "bad wine tag or commit hash"
     fi
+    git archive --format=tar "$wine_tag" | (cd "$build_dir/wine" && tar xf -)
 
     # git wine-staging
     if [[ X"$product" == X"staging" ]] || [[ X"$product" == X"pba" ]]; then
-        staging_tag="v$build_version"
         cd "$git_dir"
         if [ -d ./wine-staging ]; then
             cd ./wine-staging
@@ -87,10 +91,11 @@ swbb_prepare()
         fi
         cd "$git_dir/wine-staging"
         mkdir -p "$build_dir/wine-staging"
-        git archive --format=tar "$staging_tag" | (cd "$build_dir/wine-staging" && tar xf -)
-        if (( "$?" == 1 )); then
-            swbb_error "Error detected, likely wrong staging version."
+        #check staging tag or commit hash
+        if ! (git show "$staging_tag" 1>/dev/null); then
+            swbb_error "bad staging tag or commit hash"
         fi
+        git archive --format=tar "$staging_tag" | (cd "$build_dir/wine-staging" && tar xf -)
     fi
 
     # git wine-pba
@@ -116,7 +121,11 @@ swbb_prepare()
 
 ## main()
 ##{
-echo "$(basename $0): Edit me carefully before run!"
+
+echo "$(basename $0): Notice: By default swbb will use ccache to speeds up recompilation."
+echo "$(basename $0): Check build setting section and configure section carefully before run!"
+echo "$(basename $0): Ready to build $dir_name?"
+echo ''
 swbb_pause
 
 rm -r -f "$build_dir" & mkdir -p "$build_dir"
@@ -125,20 +134,17 @@ cd "$build_dir"
 swbb_prepare
 
 # Use custom patch #1
-if [ $use_custom_patch_1 -eq 1 ]; then
+if (( $use_custom_patch_1==1 )); then
     if [ -f "$custom_patch_1" ]; then
         cd "$build_dir/wine"
-        git apply "$custom_patch_1" && echo "Applied custom patch: $custom_patch_1"
+        if ( git apply "$custom_patch_1" ); then
+            echo "Applied custom patch: $custom_patch_1"
+        else
+            swbb_error "Failed to apply patch: $custom_patch_1"
+        fi
         swbb_pause
-    fi
-fi
-
-# Use custom patch #2
-if [ $use_custom_patch_2 -eq 1 ]; then
-    if [ -f "$custom_patch_2" ]; then
-        cd "$build_dir/wine"
-        git apply "$custom_patch_2" && echo "Applied custom patch: $custom_patch_2"
-        swbb_pause
+    else
+        swbb_error "custom patch not found: $custom_patch_1"
     fi
 fi
 
@@ -154,7 +160,11 @@ if [[ X"$product" == X"pba" ]]; then
     cd "$build_dir/wine"
     ls -1 "$build_dir/wine-pba/patches" | \
         while read pba_patch; do
-            git apply "$build_dir/wine-pba/patches/$pba_patch" && echo "Applied pba patch: $pba_patch"
+            if ( git apply "$build_dir/wine-pba/patches/$pba_patch" ); then
+                echo "Applied pba patch: $pba_patch"
+            else
+                swbb_error "Failed to apply patch: $pba_patch"
+            fi
         done
         unset pba_patch
     swbb_pause
@@ -163,14 +173,14 @@ fi
 ## configure
 cd "$build_dir/wine"
 mkdir -p 64build && cd 64build
-#../configure --disable-tests --disable-win16 --enable-win64 --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-mpg123 --without-netapi --without-opencl --without-oss --without-pcap --without-sane --without-xslt
-../configure --enable-win64 --prefix="$install_dir"
+../configure --disable-tests --disable-win16 --enable-win64 --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-vkd3d --without-xslt CC="ccache gcc" 
+#../configure --disable-tests --enable-win64 --prefix="$install_dir"  --without-hal  CC="ccache gcc"
 swbb_pause
 
 cd "$build_dir/wine"
 mkdir -p 32build && cd 32build
-#PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --disable-win16 --with-wine64=../64build --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-mpg123 --without-netapi --without-opencl --without-oss --without-pcap --without-sane --without-xslt
-PKG_CONFIG_PATH=/usr/lib ../configure --with-wine64=../64build --prefix="$install_dir"
+PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --disable-win16 --with-wine64=../64build --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-vkd3d --without-xslt  CC="ccache gcc"
+#PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --with-wine64=../64build --prefix="$install_dir" --without-hal  CC="ccache gcc"
 echo "Ready to build?"
 swbb_pause
 
@@ -182,9 +192,11 @@ time2=$(date '+%T')
 
 # install, need sudo
 cd "$build_dir/wine/64build"
-sudo make install
+#sudo make install
+sudo make install-lib
 cd "$build_dir/wine/32build"
-sudo make install
+#sudo make install
+sudo make install-lib
 echo "Install needs sudo, which result wine files owned by root, now chown to you..."
 sudo chown -hR $(whoami) "$install_dir"
 echo "compile start: $time1"
