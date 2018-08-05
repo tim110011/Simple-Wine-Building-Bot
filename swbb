@@ -3,7 +3,7 @@
 #  Simple Wine Building Bot -- swbb
 #    automatic wine, wine-staging, wine-pba download, patch, build, install script
 
-#version=0.4
+#version=0.5
 
 #    fedora:
 #        sudo dnf group install "C Development Tools and Libraries"
@@ -16,15 +16,22 @@
 ##  some optional packages disabled, edit configure section carefully before run!
 
 # build setting
-build_thread=9 								# CPU logical core +1 for max speed and max cpu usage
-build_mode="interactive" 					# automatic, interactive
-product="staging" 							# wine, staging, pba.
-tag_version="3.12" 							# version number, also used for dir name. when using with commit hash, it is recommended to name it like "3.12_git_commithash"
-wine_tag="wine-$tag_version" 				# "wine-$tag_version" or commit hash
-staging_tag="v$tag_version" 				# "v$tag_version" or commit hash, if you really want to test staging git
+build_thread=8 												# CPU logical core +1 for max speed and max cpu usage
+build_mode='interactive' 									# interactive, automatic
+product='pba' 												# wine, staging, pba.
+tag_version='3.13' 											# version number to generate git tag if you use tag not commit hash, also used for dir name. when using with commit hash, it is recommended to name it like "3.12_git_commithash"
+#wine_tag="wine-$tag_version" 								# "wine-$tag_version" or commit hash
+wine_tag='25cc380b8ed41652b135657ef7651beef2f20ae4'
+#staging_tag="v$tag_version" 								# "v$tag_version" or commit hash
+staging_tag='2f3ba1fb462894ad267d72d07ed2114e0ae1f5c2' 		# match upstream commit hash, use commit hash to build minor release like staging 3.13.1
 
-use_custom_patch_1=0 						# 0 or 1
-custom_patch_1="$HOME/your_custom.patch"
+# setup your custom patch here
+custom_patch_for_wine=0 								# 0:disable 1:enable
+patch_for_wine_dir="$HOME/patch_for_wine" 				# every .patch file in this dir will be applied to wine, before staging
+custom_patch_for_staging=0
+patch_for_staging_dir="$HOME/patch_for_staging" 		# every .patch file in this dir will be applied after staging, before pba
+custom_patch_for_pba=0
+patch_for_pba_dir="$HOME/patch_for_pba" 				# every .patch file in this dir will be applied after pba
 
 # swbb default setting
 git_dir="$HOME/_wine_git"
@@ -35,7 +42,9 @@ else
 fi
 build_ts="$(date '+%y-%m-%d-%H-%M')"
 build_dir="$HOME/__wine_build/$build_ts/$dir_name" 			# you may want to delete this dir after install
+#build_dir="/home/me/__wine_build/18-07-13-09-36/3.12-staging/"
 install_dir="$HOME/__wine_install/$build_ts/$dir_name" 		# built wine binary here!
+#install_dir="/home/me/__wine_install/18-07-13-09-36/"
 
 ####################
 
@@ -43,7 +52,7 @@ install_dir="$HOME/__wine_install/$build_ts/$dir_name" 		# built wine binary her
 swbb_pause()
 {
     if [[ X"$build_mode" == X"interactive" ]]; then
-        read -p "Press Ctrl+C to terminate or Press any key to continue." pause_input
+        read -p 'Press Ctrl+C to terminate, Press any key to continue.' pause_input
         unset pause_input
     fi
 }
@@ -52,6 +61,21 @@ swbb_error()
 {
     echo "$(basename $0) [ERROR]: $1" >&2
     exit 1
+}
+
+# usage: swbb_pach patch_dir
+swbb_patch()
+{
+    cd "$build_dir/wine"
+    patch_dir="$1"
+    ls -1 "$patch_dir" | \
+        while read patch_file; do
+            if ( git apply "$patch_dir/$patch_file" ); then
+                echo "Applied patch: $patch_dir/$patch_file"
+            else
+                swbb_error "Failed to apply patch: $patch_dir/$patch_file"
+            fi
+        done
 }
 
 # Use git prepare source and patch
@@ -63,7 +87,7 @@ swbb_prepare()
     cd "$git_dir"
     if [ -d ./wine ]; then
         cd ./wine
-        echo "Check wine update..."
+        echo 'Check wine update...'
         git fetch
         git pull
     else
@@ -74,7 +98,7 @@ swbb_prepare()
 
     #check wine tag or commit hash
     if ! (git show "$wine_tag" 1>/dev/null); then
-        swbb_error "bad wine tag or commit hash"
+        swbb_error 'wrong wine tag or commit hash'
     fi
     git archive --format=tar "$wine_tag" | (cd "$build_dir/wine" && tar xf -)
 
@@ -83,7 +107,7 @@ swbb_prepare()
         cd "$git_dir"
         if [ -d ./wine-staging ]; then
             cd ./wine-staging
-            echo "Check wine-staging update..."
+            echo 'Check wine-staging update...'
             git fetch
             git pull
         else
@@ -93,7 +117,7 @@ swbb_prepare()
         mkdir -p "$build_dir/wine-staging"
         #check staging tag or commit hash
         if ! (git show "$staging_tag" 1>/dev/null); then
-            swbb_error "bad staging tag or commit hash"
+            swbb_error 'wrong staging tag or commit hash'
         fi
         git archive --format=tar "$staging_tag" | (cd "$build_dir/wine-staging" && tar xf -)
     fi
@@ -103,7 +127,7 @@ swbb_prepare()
         cd "$git_dir"
         if [ -d ./wine-pba ]; then
             cd ./wine-pba
-            echo "Check wine-pba update..."
+            echo 'Check wine-pba update...'
             git fetch
             git pull
         else
@@ -119,6 +143,7 @@ swbb_prepare()
     swbb_pause
 }
 
+
 ## main()
 ##{
 
@@ -133,55 +158,55 @@ rm -r -f "$install_dir" & mkdir -p "$install_dir"
 cd "$build_dir"
 swbb_prepare
 
-# Use custom patch #1
-if (( $use_custom_patch_1==1 )); then
-    if [ -f "$custom_patch_1" ]; then
-        cd "$build_dir/wine"
-        if ( git apply "$custom_patch_1" ); then
-            echo "Applied custom patch: $custom_patch_1"
-        else
-            swbb_error "Failed to apply patch: $custom_patch_1"
-        fi
-        swbb_pause
-    else
-        swbb_error "custom patch not found: $custom_patch_1"
-    fi
-fi
-
-# Use staging
-if [[ X"$product" == X"staging" ]] || [[ X"$product" == X"pba" ]]; then
-    cd "$build_dir/wine-staging/patches"
-    ./patchinstall.sh DESTDIR="$build_dir/wine" --all
+# 1. Apply custom patch for wine
+if (( $custom_patch_for_wine==1 )); then
+    swbb_patch "$patch_for_wine_dir"
+    echo 'DONE: Apply custom patch for wine'
     swbb_pause
 fi
 
-#Use pba
+# 2. Use staging
+if [[ X"$product" == X"staging" ]] || [[ X"$product" == X"pba" ]]; then
+    cd "$build_dir/wine-staging/patches"
+    ./patchinstall.sh DESTDIR="$build_dir/wine" --all
+    echo 'DONE: Use staging'
+    swbb_pause
+fi
+
+# 3. Apply custom patch for staging
+if (( $custom_patch_for_staging==1 )); then
+    swbb_patch "$patch_for_staging_dir"
+    echo 'DONE: Apply custom patch for staging'
+    swbb_pause
+fi
+
+# 4. Use pba
 if [[ X"$product" == X"pba" ]]; then
-    cd "$build_dir/wine"
-    ls -1 "$build_dir/wine-pba/patches" | \
-        while read pba_patch; do
-            if ( git apply "$build_dir/wine-pba/patches/$pba_patch" ); then
-                echo "Applied pba patch: $pba_patch"
-            else
-                swbb_error "Failed to apply patch: $pba_patch"
-            fi
-        done
-        unset pba_patch
+    swbb_patch "$build_dir/wine-pba/patches"
+    echo 'DONE: Use pba'
+    swbb_pause
+fi
+
+# 5. Apply custom patch for pba
+if (( $custom_patch_for_pba==1 )); then
+    swbb_patch "$patch_for_pba_dir"
+    echo 'DONE: Apply custom patch for pba'
     swbb_pause
 fi
 
 ## configure
 cd "$build_dir/wine"
 mkdir -p 64build && cd 64build
-../configure --disable-tests --disable-win16 --enable-win64 --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-vkd3d --without-xslt CC="ccache gcc" 
-#../configure --disable-tests --enable-win64 --prefix="$install_dir"  --without-hal  CC="ccache gcc"
+../configure --disable-tests --disable-win16 --enable-win64 --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt CC="ccache gcc"
+#../configure --disable-tests --enable-win64 --prefix="$install_dir"  --without-hal --without-oss  CC="ccache gcc"
+echo 'DONE: 64bit configure, continue to 32bit configure?'
 swbb_pause
 
 cd "$build_dir/wine"
 mkdir -p 32build && cd 32build
-PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --disable-win16 --with-wine64=../64build --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-vkd3d --without-xslt  CC="ccache gcc"
-#PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --with-wine64=../64build --prefix="$install_dir" --without-hal  CC="ccache gcc"
-echo "Ready to build?"
+PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --disable-win16 --with-wine64=../64build --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt CC="ccache gcc"
+#PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --with-wine64=../64build --prefix="$install_dir" --without-hal --without-oss CC="ccache gcc"
+echo 'DONE: 32bit configure. Ready to build?'
 swbb_pause
 
 # make
@@ -197,7 +222,7 @@ sudo make install-lib
 cd "$build_dir/wine/32build"
 #sudo make install
 sudo make install-lib
-echo "Install needs sudo, which result wine files owned by root, now chown to you..."
+echo 'Install needs sudo, which result wine files owned by root, now chown to you...'
 sudo chown -hR $(whoami) "$install_dir"
 echo "compile start: $time1"
 echo "compile end:   $time2"
