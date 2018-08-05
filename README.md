@@ -9,4 +9,8 @@ wine, wine-staging, wine-pba download, patch, build, install script
 **Usage**
 * Read script comment carefully
 * modify `# build setting` section 
-* modify `# setup your custom patch here` section
+* modify `# setup your custom patch here` section, if you want to use some custom patches.
+
+**Custom Patch Example**
+* That `fallout4_sound_hack_charles.patch` is used to fix immmediate CTD after Fallout 4 load. You may try it if you have this issue.
+
