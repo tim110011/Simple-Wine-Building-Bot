@@ -1,5 +1,5 @@
 # Simple-Wine-Building-Bot
-wine, wine-staging, wine-pba download, patch, build, install script
+[wine](https://www.winehq.org/), [wine-staging](https://github.com/wine-staging/wine-staging), [wine-pba](https://github.com/acomminos/wine-pba) download, patch, build, install script
 
 **Feature**
 * Support custom patch for wine
