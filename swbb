@@ -1,9 +1,9 @@
 #!/bin/sh
 
 #  Simple Wine Building Bot -- swbb
-#    automatic wine, wine-staging, wine-pba download, patch, build, install script
+#    automatic wine, wine-staging, wine-pba, wine-pba-firerat download, patch, build, install script
 
-#version=0.5
+swbb_version=0.6.0
 
 #    fedora:
 #        sudo dnf group install "C Development Tools and Libraries"
@@ -12,46 +12,65 @@
 #
 #        sudo dnf install ImageMagick-libs.{x86_64,i686} OpenEXR-libs.{x86_64,i686} SDL2-devel.{x86_64,i686} alsa-lib-devel.{x86_64,i686} audiofile.{x86_64,i686} audiofile-devel.{x86_64,i686} autotrace.{x86_64,i686} bzip2-devel.{x86_64,i686} cairo-devel.{x86_64,i686} check.{x86_64,i686} check-devel.{x86_64,i686} chrpath cmake-filesystem.{x86_64,i686} cups-devel.{x86_64,i686} dbus-devel.{x86_64,i686} expat-devel.{x86_64,i686} fontconfig-devel.{x86_64,i686} fontforge.{x86_64,i686} fontpackages-devel.noarch freeglut-devel.{x86_64,i686} freetype-devel.{x86_64,i686} gdk-pixbuf2-devel.{x86_64,i686} gettext-common-devel.noarch gettext-devel.{x86_64,i686} giflib.{x86_64,i686} giflib-devel gl-manpages.noarch glib2-devel.{x86_64,i686} glibc-devel.{x86_64,i686} glibc-headers.{x86_64,i686} gmp-c++.{x86_64,i686} gmp-devel.{x86_64,i686} gnutls-c++.{x86_64,i686} gnutls-dane.{x86_64,i686} gnutls-devel.{x86_64,i686} gsm-devel.{x86_64,i686} icoutils ilmbase.{x86_64,i686} isdn4k-utils-devel.{x86_64,i686} keyutils-libs-devel.{x86_64,i686} krb5-devel.{x86_64,i686} lcms2-devel.{x86_64,i686} libEMF.{x86_64,i686} libICE-devel.{x86_64,i686} libSM-devel.{x86_64,i686} libX11-devel.{x86_64,i686} libXau-devel.{x86_64,i686} libXcomposite-devel.{x86_64,i686} libXcursor-devel.{x86_64,i686} libXdamage-devel.{x86_64,i686} libXext-devel.{x86_64,i686} libXfixes-devel.{x86_64,i686} libXi-devel.{x86_64,i686} libXinerama-devel.{x86_64,i686} libXmu-devel.{x86_64,i686} libXrandr-devel.{x86_64,i686} libXrender-devel.{x86_64,i686} libXt-devel.{x86_64,i686} libXxf86dga-devel.{x86_64,i686} libXxf86vm-devel.{x86_64,i686} libcom_err-devel.{x86_64,i686} libdrm-devel.{x86_64,i686} libexif-devel.{x86_64,i686} libgcrypt-devel.{x86_64,i686} libglvnd-core-devel.{x86_64,i686} libglvnd-devel.{x86_64,i686} libgpg-error-devel.{x86_64,i686} libgphoto2-devel.{x86_64,i686} libieee1284-devel.{x86_64,i686} libjpeg-turbo-devel.{x86_64,i686} libkadm5.{x86_64,i686} libpcap-devel.{x86_64,i686} libpciaccess-devel.{x86_64,i686} libpng-devel.{x86_64,i686} librsvg2-devel.{x86_64,i686} libselinux-devel.{x86_64,i686} libsepol-devel.{x86_64,i686} libspiro.{x86_64,i686} libtasn1-devel.{x86_64,i686} libtiff-devel.{x86_64,i686} libuninameslist.{x86_64,i686} libusb-devel.{x86_64,i686} libusbx-devel.{x86_64,i686} libuuid-devel.{x86_64,i686} libv4l-devel.{x86_64,i686} libverto-devel.{x86_64,i686} libxcb-devel.{x86_64,i686} libxcrypt-devel.{x86_64,i686} libxml2-devel.{x86_64,i686} libxslt-devel  mesa-libEGL-devel.{x86_64,i686} mesa-libGL-devel.{x86_64,i686} mesa-libGLES-devel.{x86_64,i686} mesa-libGLU-devel.{x86_64,i686} mesa-libOSMesa-devel.{x86_64,i686} mpg123-devel.{x86_64,i686} ncurses-c++-libs.{x86_64,i686} ncurses-devel.{x86_64,i686} nettle-devel.{x86_64,i686} ocl-icd-devel.{x86_64,i686} openal-soft-devel.{x86_64,i686} opencl-headers.noarch openldap-devel orc-compiler orc-devel.{x86_64,i686} p11-kit-devel.{x86_64,i686} pcre-cpp.{x86_64,i686} pcre-devel.{x86_64,i686} pcre-utf16.{x86_64,i686} pcre-utf32.{x86_64,i686} pcre2-devel.{x86_64,i686} pcre2-utf32.{x86_64,i686} perl-Fedora-VSP.noarch perl-generators.noarch pixman-devel.{x86_64,i686} plotutils.{x86_64,i686} pstoedit.{x86_64,i686} pulseaudio-libs-devel.{x86_64,i686} sane-backends-devel.{x86_64,i686} subunit.{x86_64,i686} subunit-devel.{x86_64,i686} systemd-devel.{x86_64,i686} unixODBC-devel.{x86_64,i686} valgrind-devel.{x86_64,i686} vulkan-devel.{x86_64,i686} xorg-x11-proto-devel.noarch xz-devel.{x86_64,i686} libva-devel.{x86_64,i686} gstreamer1*.{i686,x86_64} ffmpeg.{i686,x86_64} ffmpeg-libs.{i686,x86_64} ffmpeg-devel.{i686,x86_64}
 
-##  32bit configure MAY still complain: "gstreamer-1.0 base plugins 32-bit development files not found"
-##  some optional packages disabled, edit configure section carefully before run!
+#        32bit configure MAY still complain: "gstreamer-1.0 base plugins 32-bit development files not found"
+#        some optional packages disabled, edit configure section carefully before run!
 
-# build setting
-build_thread=8 												# CPU logical core +1 for max speed and max cpu usage
-build_mode='interactive' 									# interactive, automatic
-product='pba' 												# wine, staging, pba.
-tag_version='3.13' 											# version number to generate git tag if you use tag not commit hash, also used for dir name. when using with commit hash, it is recommended to name it like "3.12_git_commithash"
-#wine_tag="wine-$tag_version" 								# "wine-$tag_version" or commit hash
-wine_tag='25cc380b8ed41652b135657ef7651beef2f20ae4'
-#staging_tag="v$tag_version" 								# "v$tag_version" or commit hash
-staging_tag='2f3ba1fb462894ad267d72d07ed2114e0ae1f5c2' 		# match upstream commit hash, use commit hash to build minor release like staging 3.13.1
+# build setting  MODIFY ME!
+build_thread=8 													# CPU logical core +1 for max speed and max cpu usage
+build_mode='interactive' 										# [ interactive, automatic ]
+product='wine-pba' 												# [ wine, wine-staging, wine-pba, wine-pba221, wine-staging-firerat, wine-pba-firerat ] Also use as dir name for source and built binary
+selector='tag' 													# [ tag, commit ] default: tag ; use commit to build minor release like staging 3.13.1
+version='2.21' 													# official announced version like 3.15
+wine_commit='2346a4012aed5a150cd971ca1e929528722a4d12' 				# ignored when $selector set to 'tag'
+staging_commit='214a0fd7bd45e431f548f1d7974b3f24410dd9d8' 			# ignored when $selector set to 'tag', match upstream commit
+staging_firerat_commit='e561320f8d2fe19426dd65cb1ff000ae9e7d6230'
 
-# setup your custom patch here
-custom_patch_for_wine=0 								# 0:disable 1:enable
-patch_for_wine_dir="$HOME/patch_for_wine" 				# every .patch file in this dir will be applied to wine, before staging
-custom_patch_for_staging=0
-patch_for_staging_dir="$HOME/patch_for_staging" 		# every .patch file in this dir will be applied after staging, before pba
-custom_patch_for_pba=0
-patch_for_pba_dir="$HOME/patch_for_pba" 				# every .patch file in this dir will be applied after pba
+# Custom patches setting
+patch_wine=0 											# [0,1] 0: do not use custom patches for wine; 1:use custom patches for wine
+patch_staging=0 										# [0,1] 0: do not use custom patches for wine-staging; 1:use custom patches for wine-staging
+patch_pba=0
+wine_patch_dir="$HOME/0_wine/patch/wine" 				# put custom patches for wine in this dir
+staging_patch_dir="$HOME/0_wine/patch/staging" 			# put custom patches for wine-staging in this dir
+pba_patch_dir="$HOME/0_wine/patch/pba"
 
-# swbb default setting
+# swbb setting
 git_dir="$HOME/_wine_git"
-if [[ X"$product" == X"wine" ]]; then
-    dir_name="$tag_version"
-else
-    dir_name="$tag_version-$product"
-fi
 build_ts="$(date '+%y-%m-%d-%H-%M')"
-build_dir="$HOME/__wine_build/$build_ts/$dir_name" 			# you may want to delete this dir after install
-#build_dir="/home/me/__wine_build/18-07-13-09-36/3.12-staging/"
-install_dir="$HOME/__wine_install/$build_ts/$dir_name" 		# built wine binary here!
-#install_dir="/home/me/__wine_install/18-07-13-09-36/"
+if [ X"$selector" == X'tag' ]; then
+    dir_name="$product-$version"
+elif [ X"$selector" == X'commit' ]; then
+    case $product in
+    wine)
+        dir_name="$product-$wine_commit"
+        ;;
+    wine-staging)
+        dir_name="$product-$staging_commit"
+        ;;
+    wine-staging-firerat)
+        dir_name="$product-$staging_firerat_commit"
+        ;;
+    *)
+        printf 'wrong value in $product'
+        exit 1
+        ;;
+    esac
+else
+    printf 'wrong value in $selector'
+    exit 1
+fi
+build_dir="$HOME/__wine_build/$build_ts/$dir_name" 				# you may want to delete this dir after install
+install_dir="$HOME/__wine_install/$build_ts/$dir_name" 			# built wine binary here!
 
-####################
+# Check these configure argmements carefully! MODIFY ME!
+configure_64args="--disable-tests --disable-win16 --enable-win64  --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt"
+configure_32args="--disable-tests --disable-win16 --with-wine64=../64build --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt"
+
+########################################
 
 # Paus or not pause
 swbb_pause()
 {
-    if [[ X"$build_mode" == X"interactive" ]]; then
+    if [ X"$build_mode" == X'interactive' ]; then
         read -p 'Press Ctrl+C to terminate, Press any key to continue.' pause_input
         unset pause_input
     fi
@@ -63,7 +82,124 @@ swbb_error()
     exit 1
 }
 
-# usage: swbb_pach patch_dir
+swbb_check_dependencies()
+{
+    dependencies=(ccache git sudo)
+    missing=0
+    for ((i=0; i < ${#dependencies[*]}; i++)); do
+        if ! (which ${dependencies[i]} >/dev/null 2>&1); then
+            echo "${dependencies[i]}" not found.
+            missing=$(($missing+1))
+        fi
+    done
+    if (( $missing > 0 )); then
+        swbb_error "$missing" dependencies not found.
+    fi
+}
+
+# Usage: swbb_prepare "$1"
+swbb_prepare()
+{
+    mkdir -p "$git_dir"
+    cd "$git_dir"
+    remote="$1"
+    local="$remote" 		#local dir, same name
+    case "$remote" in
+    wine)
+        url='git://source.winehq.org/git/wine.git'
+        git_archive='yes'
+        if [ X"$selector" == X'tag' ]; then
+            release="wine-$version"
+        elif [ X"$selector" == X'commit' ]; then
+            release="$wine_commit"
+        else
+            swbb_error "swbb_git_source(): wine) wrong value in '$release'"
+        fi
+        ;;
+    wine-staging)
+        url='https://github.com/wine-staging/wine-staging.git'
+        git_archive='yes'
+        if [ X"$selector" == X'tag' ]; then
+            release="v$version"
+        elif [ X"$selector" == X'commit' ]; then
+            release="$staging_commit"
+        else
+            swbb_error "swbb_git_source(): wine-staging) wrong value in '$release'"
+        fi
+        ;;
+    wine-pba)
+        url='https://github.com/acomminos/wine-pba.git'
+        pba221_commit='a5dff624a8a63dca94138145105718ee712f7ddf' 			# wine-pba 2.21, this is a "golden" version for dx9 game. https://bugs.winehq.org/show_bug.cgi?id=44315#c32
+        pba33_commit='87307b1b9093c769d21d0803bb122b9866bb887c' 			# pba 3.3, 3.4
+        pba35_commit='c34cd8d41d640d08ff2e46192f095de163c665ea' 			# pba 3.5
+        pba36_commit='1712a3769b0b1ae107cdc0e3bfa4f285b0e43321' 			# pba 3.6 - 3.13.1
+        case "$version" in
+        2.21)
+            git_archive='yes'
+            release="$pba221_commit"
+            ;;
+        3.0* | 3.1 | 3.2)
+            swbb_error "Unsupported version: $version."
+            ;;
+        3.3)
+            git_archive='yes'
+            release="$pba33_commit"
+            ;;
+        3.5)
+            git_archive='yes'
+            release="$pba35_commit"
+            ;;
+        3.6)
+            git_archive='yes'
+            release="$pba35_commit"
+            ;;
+        *)
+            git_archive='no'
+            ;;
+        esac
+        ;;
+    wine-staging-firerat)
+        url='https://github.com/Firerat/wine-staging.git'
+        git_archive='yes'
+        if [ X"$selector" == X'tag' ]; then
+            release="wine-staging-pba-v$version"
+        elif [ X"$selector" == X'commit' ]; then
+            release="$staging_firerat_commit"
+        else
+            swbb_error "swbb_git_source(): wine-staging-firerat) wrong value in '$release'"
+        fi
+        ;;
+    wine-pba-firerat)
+        url='https://github.com/Firerat/wine-pba.git'
+        git_archive='no'
+        ;;
+    *)
+        swbb_error "swbb_git_source(): wrong value in '$remote'"
+        ;;
+    esac
+    if [ -d ./"$local"/.git ]; then
+        cd ./"$local"
+        echo "Check $remote update..."
+        git fetch
+        git pull
+    else
+        git clone "$url" "$local"
+        cd ./"$local"
+    fi
+    if [ X"$git_archive" == X'yes' ]; then
+        if ! (git show "$release" 1>/dev/null); then
+            swbb_error 'wrong wine tag or commit hash'
+        fi
+        mkdir -p "$build_dir/$local"
+        git archive --format=tar "$release" | (cd "$build_dir/$local" && tar xf -)
+    elif [ X"$git_archive" == X'no' ]; then
+        cp -R "$git_dir/$local" "$build_dir"
+    else
+        swbb_error "swbb_git_source(): wrong value in '$git_archive'"
+    fi
+}
+
+# git apply
 swbb_patch()
 {
     cd "$build_dir/wine"
@@ -78,134 +214,111 @@ swbb_patch()
         done
 }
 
-# Use git prepare source and patch
-swbb_prepare()
-{
-    mkdir -p "$git_dir"
+########################################
 
-    # git wine
-    cd "$git_dir"
-    if [ -d ./wine ]; then
-        cd ./wine
-        echo 'Check wine update...'
-        git fetch
-        git pull
-    else
-        git clone git://source.winehq.org/git/wine.git wine
-    fi
-    cd "$git_dir/wine"
-    mkdir -p "$build_dir/wine"
-
-    #check wine tag or commit hash
-    if ! (git show "$wine_tag" 1>/dev/null); then
-        swbb_error 'wrong wine tag or commit hash'
-    fi
-    git archive --format=tar "$wine_tag" | (cd "$build_dir/wine" && tar xf -)
-
-    # git wine-staging
-    if [[ X"$product" == X"staging" ]] || [[ X"$product" == X"pba" ]]; then
-        cd "$git_dir"
-        if [ -d ./wine-staging ]; then
-            cd ./wine-staging
-            echo 'Check wine-staging update...'
-            git fetch
-            git pull
-        else
-            git clone https://github.com/wine-staging/wine-staging.git wine-staging
-        fi
-        cd "$git_dir/wine-staging"
-        mkdir -p "$build_dir/wine-staging"
-        #check staging tag or commit hash
-        if ! (git show "$staging_tag" 1>/dev/null); then
-            swbb_error 'wrong staging tag or commit hash'
-        fi
-        git archive --format=tar "$staging_tag" | (cd "$build_dir/wine-staging" && tar xf -)
-    fi
-
-    # git wine-pba
-    if [[ X"$product" == X"pba" ]]; then
-        cd "$git_dir"
-        if [ -d ./wine-pba ]; then
-            cd ./wine-pba
-            echo 'Check wine-pba update...'
-            git fetch
-            git pull
-        else
-            git clone https://github.com/acomminos/wine-pba.git wine-pba
-        fi
-        cd "$git_dir/wine-pba"
-        mkdir -p "$build_dir/wine-pba"
-        #There is no tag in pba, use cp to copy patch
-        #git archive --format=tar "$pba_tag" | (cd "$build_dir/wine-pba" && tar xf -)
-        cp -R "$git_dir/wine-pba" "$build_dir"
-    fi
-
-    swbb_pause
-}
-
-
-## main()
+#### main()
 ##{
-
-echo "$(basename $0): Notice: By default swbb will use ccache to speeds up recompilation."
-echo "$(basename $0): Check build setting section and configure section carefully before run!"
-echo "$(basename $0): Ready to build $dir_name?"
-echo ''
+printf "Simple Wine Building Bot %s\n\n" $swbb_version
+printf "Check configure section carefully before run.\n"
+printf "Ready to build %s?\n" $dir_name
 swbb_pause
+swbb_check_dependencies
 
 rm -r -f "$build_dir" & mkdir -p "$build_dir"
 rm -r -f "$install_dir" & mkdir -p "$install_dir"
 cd "$build_dir"
-swbb_prepare
+
+case "$product" in
+    wine)
+        swbb_prepare wine
+        ;;
+    wine-staging)
+        swbb_prepare wine
+        swbb_prepare wine-staging
+        ;;
+    wine-pba)
+        swbb_prepare wine
+        swbb_prepare wine-staging
+        swbb_prepare wine-pba
+        ;;
+    wine-staging-firerat)
+        swbb_prepare wine
+        swbb_prepare wine-staging-firerat
+        ;;
+    wine-pba-firerat)
+        swbb_prepare wine
+        swbb_prepare wine-staging-firerat
+        swbb_prepare wine-pba-firerat
+        ;;
+    *)
+        swbb_error "wrong value in '$product'"
+        ;;
+esac
+swbb_pause
 
 # 1. Apply custom patch for wine
-if (( $custom_patch_for_wine==1 )); then
-    swbb_patch "$patch_for_wine_dir"
+if (( $patch_wine == 1 )); then
+    swbb_patch "$wine_patch_dir"
     echo 'DONE: Apply custom patch for wine'
     swbb_pause
 fi
 
-# 2. Use staging
-if [[ X"$product" == X"staging" ]] || [[ X"$product" == X"pba" ]]; then
+# 2a. Use staging
+if [ X"$product" == X'wine-staging' ] || [ X"$product" == X'wine-pba' ]; then
     cd "$build_dir/wine-staging/patches"
     ./patchinstall.sh DESTDIR="$build_dir/wine" --all
     echo 'DONE: Use staging'
     swbb_pause
+    if (( $patch_staging == 1 )); then
+        swbb_patch "$staging_patch_dir"
+        echo 'DONE: Apply custom patch for staging'
+        swbb_pause
+    fi
 fi
 
-# 3. Apply custom patch for staging
-if (( $custom_patch_for_staging==1 )); then
-    swbb_patch "$patch_for_staging_dir"
-    echo 'DONE: Apply custom patch for staging'
-    swbb_pause
-fi
-
-# 4. Use pba
-if [[ X"$product" == X"pba" ]]; then
+# 3a. Use pba
+if [ X"$product" == X'wine-pba' ]; then
     swbb_patch "$build_dir/wine-pba/patches"
     echo 'DONE: Use pba'
     swbb_pause
+    if (( $patch_pba == 1 )); then
+        swbb_patch "$pba_patch_dir"
+        echo 'DONE: Apply custom patch for pba'
+        swbb_pause
+    fi
 fi
 
-# 5. Apply custom patch for pba
-if (( $custom_patch_for_pba==1 )); then
-    swbb_patch "$patch_for_pba_dir"
-    echo 'DONE: Apply custom patch for pba'
+# 2b. Use staging-firerat
+if [ X"$product" == X'wine-staging-firerat' ] || [ X"$product" == X'wine-pba-firerat' ]; then
+    cd "$build_dir/wine-staging-firerat/patches"
+    ./patchinstall.sh DESTDIR="$build_dir/wine" --all
+    echo 'DONE: Use staging-firerat'
     swbb_pause
 fi
 
-## configure
+# 3b. Use pba-firerat
+if [ X"$product" == X'wine-pba-firerat' ]; then
+    swbb_patch "$build_dir/wine-pba-firerat/patches"
+    echo 'DONE: Use pba-firerat'
+    swbb_pause
+fi
+
+
+## configure MODIFY ME!
 cd "$build_dir/wine"
 mkdir -p 64build && cd 64build
-../configure --disable-tests --disable-win16 --enable-win64 --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt CC="ccache gcc"
-#../configure --disable-tests --enable-win64 --prefix="$install_dir"  --without-hal --without-oss  CC="ccache gcc"
+
+#../configure --enable-win64 --prefix="$install_dir"
+#../configure --disable-tests --disable-win16 --enable-win64  --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt --prefix="$install_dir" CC="ccache gcc"
+echo "$configure_64args --prefix=$install_dir CC='ccache gcc'" | xargs ../configure
 echo 'DONE: 64bit configure, continue to 32bit configure?'
 swbb_pause
 
 cd "$build_dir/wine"
 mkdir -p 32build && cd 32build
-PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --disable-win16 --with-wine64=../64build --prefix="$install_dir" --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt CC="ccache gcc"
-#PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --with-wine64=../64build --prefix="$install_dir" --without-hal --without-oss CC="ccache gcc"
+#PKG_CONFIG_PATH=/usr/lib ../configure --with-wine64=../64build --prefix="$install_dir"
+#PKG_CONFIG_PATH=/usr/lib ../configure --disable-tests --disable-win16 --with-wine64=../64build --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt --prefix="$install_dir" CC="ccache gcc"
+PKG_CONFIG_PATH=/usr/lib echo "$configure_32args --prefix=$install_dir CC='ccache gcc'" | xargs ../configure
 echo 'DONE: 32bit configure. Ready to build?'
 swbb_pause
 
