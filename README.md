@@ -6,6 +6,9 @@
 * Support custom patch for wine-staging
 * Support custom patch for wine-pba
 
+**Change**
+* 0.6.1: add support for pba-firerat
+
 **Usage**
 * Read script comment carefully
 * modify `# build setting` section 
