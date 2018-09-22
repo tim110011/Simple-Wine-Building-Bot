@@ -3,7 +3,7 @@
 #  Simple Wine Building Bot -- swbb
 #    automatic wine, wine-staging, wine-pba, wine-pba-firerat download, patch, build, install script
 
-swbb_version=0.6.0
+swbb_version=0.6.1
 
 #    fedora:
 #        sudo dnf group install "C Development Tools and Libraries"
@@ -18,20 +18,23 @@ swbb_version=0.6.0
 # build setting  MODIFY ME!
 build_thread=8 													# CPU logical core +1 for max speed and max cpu usage
 build_mode='interactive' 										# [ interactive, automatic ]
-product='wine-pba' 												# [ wine, wine-staging, wine-pba, wine-pba221, wine-staging-firerat, wine-pba-firerat ] Also use as dir name for source and built binary
+product='wine-pba-firerat' 								# [ wine, wine-staging, wine-pba, wine-stagingpba-firerat, wine-pba-firerat ] Also use as dir name for source and built binary. wine-stagingpba-firerat: `staging with pba` by firerat. wine-pba-firerat: Use pba patch by firerat on official staging
 selector='tag' 													# [ tag, commit ] default: tag ; use commit to build minor release like staging 3.13.1
-version='2.21' 													# official announced version like 3.15
-wine_commit='2346a4012aed5a150cd971ca1e929528722a4d12' 				# ignored when $selector set to 'tag'
-staging_commit='214a0fd7bd45e431f548f1d7974b3f24410dd9d8' 			# ignored when $selector set to 'tag', match upstream commit
-staging_firerat_commit='e561320f8d2fe19426dd65cb1ff000ae9e7d6230'
+version='3.16' 													# official announced version like 3.15
+wine_commit='2346a4012aed5a150cd971ca1e929528722a4d12' 			# ignored when $selector set to 'tag'
+staging_commit='214a0fd7bd45e431f548f1d7974b3f24410dd9d8' 		# ignored when $selector set to 'tag', match upstream commit
+stagingpba_firerat_commit='' 									# https://gitlab.com/Firer4t/wine-staging
+pba_firerat_commit=''
 
 # Custom patches setting
 patch_wine=0 											# [0,1] 0: do not use custom patches for wine; 1:use custom patches for wine
 patch_staging=0 										# [0,1] 0: do not use custom patches for wine-staging; 1:use custom patches for wine-staging
 patch_pba=0
+patch_pba_firerat=0
 wine_patch_dir="$HOME/0_wine/patch/wine" 				# put custom patches for wine in this dir
 staging_patch_dir="$HOME/0_wine/patch/staging" 			# put custom patches for wine-staging in this dir
 pba_patch_dir="$HOME/0_wine/patch/pba"
+pba_firerat_patch_dir="$HOME/0_wine/patch/pba-firerat"
 
 # swbb setting
 git_dir="$HOME/_wine_git"
@@ -46,8 +49,11 @@ elif [ X"$selector" == X'commit' ]; then
     wine-staging)
         dir_name="$product-$staging_commit"
         ;;
-    wine-staging-firerat)
-        dir_name="$product-$staging_firerat_commit"
+    wine-stagingpba-firerat)
+        dir_name="$product-$stagingpba_firerat_commit"
+        ;;
+    wine-pba-firerat)
+        dir_name="$product-$pba_firerat_commit"
         ;;
     *)
         printf 'wrong value in $product'
@@ -62,8 +68,8 @@ build_dir="$HOME/__wine_build/$build_ts/$dir_name" 				# you may want to delete 
 install_dir="$HOME/__wine_install/$build_ts/$dir_name" 			# built wine binary here!
 
 # Check these configure argmements carefully! MODIFY ME!
-configure_64args="--disable-tests --disable-win16 --enable-win64  --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt"
-configure_32args="--disable-tests --disable-win16 --with-wine64=../64build --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt"
+configure_64args='--disable-tests --disable-win16 --enable-win64  --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt'
+configure_32args='--disable-tests --disable-win16 --with-wine64=../64build --without-capi --without-cms --without-coreaudio --without-cups --without-curses --without-gphoto --without-gsm --without-gssapi --without-gstreamer --without-gtk3 --without-hal --without-krb5 --without-ldap --without-netapi --without-oss --without-pcap --without-sane --without-xslt'
 
 ########################################
 
@@ -129,10 +135,10 @@ swbb_prepare()
         ;;
     wine-pba)
         url='https://github.com/acomminos/wine-pba.git'
-        pba221_commit='a5dff624a8a63dca94138145105718ee712f7ddf' 			# wine-pba 2.21, this is a "golden" version for dx9 game. https://bugs.winehq.org/show_bug.cgi?id=44315#c32
+        pba221_commit='a5dff624a8a63dca94138145105718ee712f7ddf' 			# pba 2.21
         pba33_commit='87307b1b9093c769d21d0803bb122b9866bb887c' 			# pba 3.3, 3.4
         pba35_commit='c34cd8d41d640d08ff2e46192f095de163c665ea' 			# pba 3.5
-        pba36_commit='1712a3769b0b1ae107cdc0e3bfa4f285b0e43321' 			# pba 3.6 - 3.13.1
+        pba36_commit='1712a3769b0b1ae107cdc0e3bfa4f285b0e43321' 			# pba 3.6 - 3.13
         case "$version" in
         2.21)
             git_archive='yes'
@@ -149,29 +155,36 @@ swbb_prepare()
             git_archive='yes'
             release="$pba35_commit"
             ;;
-        3.6)
+        3.6 | 3.7 | 3.8 | 3.9 | 3.10 | 3.11 | 3.12 | 3.13)
             git_archive='yes'
-            release="$pba35_commit"
+            release="$pba36_commit"
             ;;
         *)
             git_archive='no'
             ;;
         esac
         ;;
-    wine-staging-firerat)
-        url='https://github.com/Firerat/wine-staging.git'
+    wine-stagingpba-firerat )
+        url='https://gitlab.com/Firer4t/wine-staging.git'
         git_archive='yes'
         if [ X"$selector" == X'tag' ]; then
             release="wine-staging-pba-v$version"
         elif [ X"$selector" == X'commit' ]; then
-            release="$staging_firerat_commit"
+            release="$stagingpba_firerat_commit"
         else
-            swbb_error "swbb_git_source(): wine-staging-firerat) wrong value in '$release'"
+            swbb_error "swbb_git_source(): wine-stagingpba-firerat) wrong value in '$release'"
         fi
         ;;
     wine-pba-firerat)
-        url='https://github.com/Firerat/wine-pba.git'
-        git_archive='no'
+        url='https://gitlab.com/Firer4t/wine-pba.git'
+        git_archive='yes'
+        if [ X"$selector" == X'tag' ]; then
+            release="knobs_and_switches-v$version"
+        elif [ X"$selector" == X'commit' ]; then
+            release="$pba_firerat_commit"
+        else
+            swbb_error "swbb_git_source(): wine-pba-firerat) wrong value in '$release'"
+        fi
         ;;
     *)
         swbb_error "swbb_git_source(): wrong value in '$remote'"
@@ -219,7 +232,7 @@ swbb_patch()
 #### main()
 ##{
 printf "Simple Wine Building Bot %s\n\n" $swbb_version
-printf "Check configure section carefully before run.\n"
+printf "Check configure section carefully before run.\n\n"
 printf "Ready to build %s?\n" $dir_name
 swbb_pause
 swbb_check_dependencies
@@ -241,13 +254,13 @@ case "$product" in
         swbb_prepare wine-staging
         swbb_prepare wine-pba
         ;;
-    wine-staging-firerat)
+    wine-stagingpba-firerat)
         swbb_prepare wine
-        swbb_prepare wine-staging-firerat
+        swbb_prepare wine-stagingpba-firerat
         ;;
     wine-pba-firerat)
         swbb_prepare wine
-        swbb_prepare wine-staging-firerat
+        swbb_prepare wine-staging
         swbb_prepare wine-pba-firerat
         ;;
     *)
@@ -256,15 +269,15 @@ case "$product" in
 esac
 swbb_pause
 
-# 1. Apply custom patch for wine
+#  Apply custom patch for wine
 if (( $patch_wine == 1 )); then
     swbb_patch "$wine_patch_dir"
     echo 'DONE: Apply custom patch for wine'
     swbb_pause
 fi
 
-# 2a. Use staging
-if [ X"$product" == X'wine-staging' ] || [ X"$product" == X'wine-pba' ]; then
+#  Use staging
+if [ X"$product" == X'wine-staging' ] || [ X"$product" == X'wine-pba' ] || [ X"$product" == X'wine-pba-firerat' ]; then
     cd "$build_dir/wine-staging/patches"
     ./patchinstall.sh DESTDIR="$build_dir/wine" --all
     echo 'DONE: Use staging'
@@ -276,7 +289,15 @@ if [ X"$product" == X'wine-staging' ] || [ X"$product" == X'wine-pba' ]; then
     fi
 fi
 
-# 3a. Use pba
+#  Use stagingpba-firerat
+if [ X"$product" == X'wine-stagingpba-firerat' ]; then
+    cd "$build_dir/wine-stagingpba-firerat/patches"
+    ./patchinstall.sh DESTDIR="$build_dir/wine" --all
+    echo 'DONE: Use stagingpba-firerat'
+    swbb_pause
+fi
+
+#  Use pba
 if [ X"$product" == X'wine-pba' ]; then
     swbb_patch "$build_dir/wine-pba/patches"
     echo 'DONE: Use pba'
@@ -288,21 +309,17 @@ if [ X"$product" == X'wine-pba' ]; then
     fi
 fi
 
-# 2b. Use staging-firerat
-if [ X"$product" == X'wine-staging-firerat' ] || [ X"$product" == X'wine-pba-firerat' ]; then
-    cd "$build_dir/wine-staging-firerat/patches"
-    ./patchinstall.sh DESTDIR="$build_dir/wine" --all
-    echo 'DONE: Use staging-firerat'
-    swbb_pause
-fi
-
-# 3b. Use pba-firerat
+#  Use pba-firerat
 if [ X"$product" == X'wine-pba-firerat' ]; then
     swbb_patch "$build_dir/wine-pba-firerat/patches"
     echo 'DONE: Use pba-firerat'
     swbb_pause
+    if (( $patch_pba_firerat == 1 )); then
+        swbb_patch "$pba_firerat_patch_dir"
+        echo 'DONE: Apply custom patch for pba-firerat'
+        swbb_pause
+    fi
 fi
-
 
 ## configure MODIFY ME!
 cd "$build_dir/wine"
