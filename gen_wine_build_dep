@@ -6,7 +6,7 @@ set -e
 
 usage()
 {
-	printf "Process file, content pasted by command'sudo dnf builddep wine'\n"
+	printf "Process file, content pasted by command 'sudo dnf builddep wine'\n"
     printf "  Usage: $(basename $0) INPUT_FILE [OUTPUT_FILE]\n"
 }
 
