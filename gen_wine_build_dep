@@ -1,0 +1,38 @@
+#!/bin/sh
+set -e
+
+# generate wine build dep package install command for fedora x64
+#  not prefert: if you encounter package conflit, edit output file and remove conflict .i686 package
+
+usage()
+{
+	printf "Process file, content pasted by command'sudo dnf builddep wine'\n"
+    printf "  Usage: $(basename $0) INPUT_FILE [OUTPUT_FILE]\n"
+}
+
+##main()
+##{
+
+( (( $# == 1 )) || (( $# == 2 )) ) || usage
+
+if [ -v "$2" ]; then
+	outfile="$2"
+else
+	outfile="depcmd.txt"
+fi
+
+strbuffer="sudo dnf install --skip-broken"
+exec 0<"$1"
+while read line; do
+	package=$(echo $line | awk '{ print $1 }')
+	arch=$(echo $line | awk '{ print $2 }')
+	if ( [ X"$arch" == X"x86_64" ] || [ X"$arch" == X"i686" ] );then
+		suffix=".{x86_64,i686}"
+		strbuffer="$strbuffer $package$suffix"
+	elif [ X"$arch" == X"noarch" ]; then
+		strbuffer="$strbuffer $package"
+	fi
+done
+echo "$strbuffer">./"$outfile"
+
+##}
