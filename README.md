@@ -16,3 +16,8 @@ Work on Fedora, not the chroot way
 * Read script comment carefully
 * modify `# build setting` section 
 * modify `# setup your custom patch here` section, if you want to use some custom patches.
+
+**Tips for building wine with esync**
+* Treat esync release as custom patch: extract esync.tgz to `wine_patch_dir`
+* set `selector` to `'commit'`
+* set `wine_commit` to esync rebased against hash
