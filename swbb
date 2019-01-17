@@ -4,7 +4,7 @@
 #	automatic wine, wine-staging, wine-pba, wine-pba-firerat download, patch, build, install script
 #	build with 64bit wine
 
-swbb_version=0.7.0
+swbb_version=0.7.1
 
 #fedora:
 #	sudo dnf group install install samba-winbind-clients
@@ -22,10 +22,10 @@ build_thread=8													# CPU logical core +1 for max speed and max cpu usage
 build_mode='interactive'										# [ interactive, automatic ]
 check_update='no'												# [ yes, no ] check source update or skip
 product='wine'													# [ wine, wine-staging, wine-pba, wine-stagingpba-firerat, wine-pba-firerat ] Also use as dir name for source and built binary. wine-stagingpba-firerat: `staging with pba` by firerat. wine-pba-firerat: Use pba patch by firerat on official staging
-selector='commit'													# [ tag, commit ] default: tag ; use commit to build minor release like staging 3.13.1
-version='3.17'													# official announced version like 3.15
-wine_commit='3056f9beb95f66e598ab51d5d37b21a548b3e5f8'			# ignored when $selector set to 'tag'
-staging_commit='214a0fd7bd45e431f548f1d7974b3f24410dd9d8'		# ignored when $selector set to 'tag', match upstream commit
+selector='tag'												# [ tag, commit ] default: tag ; use commit to build minor release like staging 3.13.1 or build with esync
+version='4.0-rc6'													# ignored when selector set to 'commit', official announced version like 3.15
+wine_commit='3056f9beb95f66e598ab51d5d37b21a548b3e5f8'			# ignored when selector set to 'tag'
+staging_commit='214a0fd7bd45e431f548f1d7974b3f24410dd9d8'		# ignored when selector set to 'tag', match wine_commit
 stagingpba_firerat_commit=''									# https://gitlab.com/Firer4t/wine-staging
 pba_firerat_commit=''
 
@@ -36,7 +36,7 @@ patch_wine=1											# [0,1] 0: do not use custom patches for wine; 1:use cust
 patch_staging=0											# [0,1] 0: do not use custom patches for wine-staging; 1:use custom patches for wine-staging
 patch_pba=0
 patch_pba_firerat=0
-wine_patch_dir="$HOME/0_wine/patch/wine"				# put custom patches for wine in this dir
+wine_patch_dir="$HOME/0_wine/patch/wine"				# put custom patches for wine in this dir, also put esync here 
 staging_patch_dir="$HOME/0_wine/patch/staging"			# put custom patches for wine-staging in this dir
 pba_patch_dir="$HOME/0_wine/patch/pba"
 pba_firerat_patch_dir="$HOME/0_wine/patch/pba-firerat"
@@ -244,14 +244,14 @@ swbb_patch()
 {
 	cd "$build_dir/wine"
 	patch_dir="$1"
-	ls -1 "$patch_dir" | \
-		while read patch_file; do
-			if ( git apply "$patch_dir/$patch_file" ); then
-				echo "Applied patch: $patch_dir/$patch_file"
-			else
-				swbb_error "Failed to apply patch: $patch_dir/$patch_file"
-			fi
-		done
+	readarray -t arpf <<< $( ls -1 "$patch_dir" )
+	for (( i=0; i < ${#arpf[@]}; i++ )); do
+		if ( git apply "$patch_dir/${arpf[i]}" ); then
+			echo "Applied patch: $patch_dir/${arpf[i]}"
+		else
+			swbb_error "Failed to apply patch: $patch_dir/${arpf[i]}"
+		fi
+	done
 }
 
 ########################################
