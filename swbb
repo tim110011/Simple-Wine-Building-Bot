@@ -358,7 +358,7 @@ mkdir -p 64build && cd 64build
 if (( $optimize_native_cpu == 1 )); then
 	echo "$configure_64args --prefix=$install_dir CFLAGS='-march=native -O2' CXXFLAGS='-march=native -O2' CC='ccache gcc'" | xargs ../configure
 else
-	echo "$configure_64args --prefix=$install_dir CFLAGS='-O2'  CXXFLAGS='-O2' CC='ccache gcc'" | xargs ../configure
+	echo "$configure_64args --prefix=$install_dir CFLAGS='-O2' CXXFLAGS='-O2' CC='ccache gcc'" | xargs ../configure
 fi
 
 echo 'DONE: 64bit configure, continue to 32bit configure?'
