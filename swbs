@@ -1,0 +1,303 @@
+#!/bin/bash
+set -e
+
+# simple wine build script (SWBS)
+SWBS_VERSION=0.9.0
+
+########################################
+#         user settings                #
+########################################
+
+git_dir="/mnt/hd/me/git_local/wines"
+branch='wine-staging'							# [ wine, wine-staging, wine-pba, wine-pba-firerat ] Also use as dir name for source and built binary. wine-stagingpba-firerat: `staging with pba` by firerat. wine-pba-firerat: Use pba patch by firerat on official staging
+wine_gitrev='wine-7.11'							# [ tag, commit hash ] see git tag -l
+staging_gitrev='v7.11'
+check_update=1								# check official repo for update
+allow_pause=1								# pause process after each step to see terminal output
+jobs=$(($(nproc)+0))						# make parallel execution jobs
+
+# configure args from wine-2.0 to wine 7.x
+configure_custom_args=(\
+	--disable-win16\
+	--disable-tests\
+	--without-capi\
+	--without-cms\
+	--without-coreaudio\
+	--without-cups\
+	--without-curses\
+	--without-gphoto\
+	--without-gsm\
+	--without-hal\
+	--without-krb5\
+	--without-ldap\
+	--without-netapi\
+	--without-openal\
+	--without-opencl\
+	--without-oss\
+	--without-pcap\
+	--without-sane\
+	--without-xinerama\
+	--without-xslt\
+	CFLAGS='-O3 -march=native -fcommon'\
+	CXXFLAGS='-O3 -march=native -fcommon'\
+	CROSSCFLAGS='-O3 -march=native -fcommon'\
+	CC='ccache gcc'\
+	)
+
+## Custom wine, wine-staging patches settings
+
+use_custom_wine_patch=0											# [0,1] 0: do not use custom patches for wine; 1:use custom patches for wine
+custom_wine_patch_dir="$git_dir/custom_wine_patch"				# put custom patches for wine in this dir
+use_custom_staging_patch=0
+custom_staging_patch_dir="$git_dir/custom_staging_patch"
+
+
+## Legacy wine-pba support, don't work with wine 4.x or newer
+# https://github.com/acomminos/wine-pba
+# rebase wine-staging v3.7
+# https://gitlab.com/Firer4t/wine-pba
+# rebase wine-staging v3.20
+
+#pba_gitrev=''				# acomminos pba have no tags, auto selected by SWBS according to $wine_gitrev
+use_custom_pba_patch=0
+custom_pba_patch_dir="$git_dir/custom_pba_patch"
+
+pba_firerat_gitrev='knobs_and_switches-v3.20'
+use_custom_firerat_pba_patch=0
+custom_firerat_pba_patch_dir="$git_dir/custom_firerat_pba_patch"
+
+
+########################################
+#         end of user settings         #
+########################################
+
+if [[ "${configure_custom_args[*]}" =~ -march=native ]]; then
+	cpu_march="$( gcc -v -E -x c /dev/null -o /dev/null -march=native 2>&1 | grep '/cc1' | tr " " "\n" | grep -e '-march' | sed -En 's/-march=//gp' )"
+	[ -n "$cpu_march" ] || cpu_march="cpu-march-unknown"
+	dir_name="$branch-${wine_gitrev#wine-}-$cpu_march"
+else
+	dir_name="$branch-${wine_gitrev#wine-}"
+fi
+ts="$(date +%Y%m%d_%H%M%S)"
+build_dir="$(readlink -m "$git_dir/../../tmp/$dir_name")"
+install_dir="$(readlink -m "$git_dir/../../$ts/$dir_name")"
+
+configure_32_args=(PKG_CONFIG_PATH=/usr/lib --with-wine64=../64build --prefix="$install_dir")
+configure_64_args=(--enable-win64 --prefix="$install_dir")
+configure_32_args+=("${configure_custom_args[@]}")
+configure_64_args+=("${configure_custom_args[@]}")
+
+
+########################################
+
+# Paus or not pause
+swbs_pause()
+{
+	if (( allow_pause == 1 )); then
+		read -r -p 'Press Ctrl+C to terminate, Press any key to continue...'
+	fi
+}
+
+swbb_error()
+{
+	printf "swbb ERROR: %s\n" "$*" >&2
+	exit 1
+}
+
+swbb_check_dependencies()
+{
+	dependencies=(ccache git sudo)
+	missing=0
+	for (( i=0; i < ${#dependencies[*]}; i++ )); do
+		if ! ( command -v "${dependencies[i]}" >/dev/null ); then
+			echo "${dependencies[i]}" not found.
+			missing=$(( missing+1 ))
+		fi
+	done
+	if (( missing > 0 )); then
+		swbb_error "$missing" dependencies not found.
+	fi
+}
+
+# update, export
+swbb_prepare()
+{
+	case "$1" in
+		wine)
+			remote_url='git://source.winehq.org/git/wine.git'
+			local="$(echo "$remote_url" | sed -E 's|^.*/||g; s|\..*$||g')"
+			gitrev="$wine_gitrev"
+			;;
+		wine-staging)
+			remote_url='https://github.com/wine-staging/wine-staging.git'
+			local="$(echo "$remote_url" | sed -E 's|^.*/||g; s|\..*$||g')"
+			gitrev="$staging_gitrev"
+			;;
+		wine-pba)
+			remote_url='https://github.com/acomminos/wine-pba.git'
+			local="$(echo "$remote_url" | sed -E 's|^.*/||g; s|\..*$||g')"
+			case "$wine_gitrev" in
+			wine-2.21)
+				gitrev='a5dff624a8a63dca94138145105718ee712f7ddf'
+				;;
+			wine-3.3)
+				gitrev='87307b1b9093c769d21d0803bb122b9866bb887c'
+				;;
+			wine-3.5)
+				gitrev='c34cd8d41d640d08ff2e46192f095de163c665ea'
+				;;
+			wine-3.6 | wine-3.7 | wine-3.8 | wine-3.9 | wine-3.10 | wine-3.11 | wine-3.12 | wine-3.13)
+				gitrev='1712a3769b0b1ae107cdc0e3bfa4f285b0e43321'
+				;;
+			*)
+				swbb_error "wine version: $wine_gitrev is not compitable with pba"
+				;;
+			esac
+			;;
+		wine-pba-firerat)
+			remote_url='https://gitlab.com/Firer4t/wine-pba.git'
+			local="$(echo "$remote_url" | sed -E 's|^.*/||g; s|\..*$||g')"
+			gitrev="$pba_firerat_gitrev"
+			;;
+		*)
+			swbb_error "swbb_git_source(): wrong value in '$branch'"
+			;;
+	esac
+
+	[ -d "$git_dir" ] || mkdir -p "$git_dir"
+	cd "$git_dir"
+
+	if [ -d ./"$local"/.git ]; then
+		cd ./"$local"
+		if (( check_update == 1 )); then
+			printf "Checking %s update...\n" "$1"
+			git fetch
+			git pull
+		else
+			printf "Check %s update skipped.\n" "$1"
+		fi
+	else
+		git clone "$remote_url" "$local"
+		cd ./"$local"
+	fi
+
+	#export
+	[ -n "$(git log -1 --pretty=tformat:%H "$gitrev")" ] || { printf '[ERROR] {%s}: gitrevision gitrev=%s not found.\n' "${FUNCNAME[0]}" "$gitrev"; exit 1; }
+	mkdir -p "$build_dir/$local"
+	git archive --format=tar "$gitrev" | ( cd "$build_dir/$local" && tar xf - )
+	swbs_pause
+}
+
+# apply patch: use patchinstall.sh if exist, or use git apply
+#usage: swbs_apply patch_dir
+swbs_apply()
+{
+	if [ -x "$1/patchinstall.sh" ]; then
+		cd "$1"
+		./patchinstall.sh DESTDIR="$build_dir/wine" --all
+		echo "DONE: Use patchinstall.sh in $1"
+	else
+		cd "$build_dir/wine"
+		for p in "$1"/*; do
+		# FIXME: improve git apply -v ?
+			if { git apply "$p"; }; then
+				echo "Applied patch: $p"
+			else
+				swbb_error "Failed to apply patch: $p"
+			fi
+		done
+	fi
+	swbs_pause
+}
+
+########################################
+
+##main()
+#{
+printf 'Simple Wine Building Script (SWBS) %s\n' "$SWBS_VERSION"
+printf '%s build option:\n' "$branch"
+printf '    %s\n' "${configure_custom_args[@]}"
+printf "Ready to build %s?\n" "$dir_name"
+swbs_pause
+#swbb_check_dependencies
+
+[ -d "$build_dir" ] && rm -rf "$build_dir"
+mkdir -p "$build_dir"
+case "$branch" in
+	wine)
+		swbb_prepare wine
+		(( use_custom_wine_patch == 1 )) && swbs_apply "$custom_wine_patch_dir"
+		;;
+	wine-staging)
+		swbb_prepare wine
+		(( use_custom_wine_patch == 1 )) && swbs_apply "$custom_wine_patch_dir"
+		swbb_prepare wine-staging
+		swbs_apply "$build_dir/wine-staging/patches"
+		(( use_custom_staging_patch == 1 )) && swbs_apply "$custom_staging_patch_dir"
+		;;
+	wine-pba)
+		swbb_prepare wine
+		(( use_custom_wine_patch == 1 )) && swbs_apply "$custom_wine_patch_dir"
+		swbb_prepare wine-staging
+		swbs_apply "$build_dir/wine-staging/patches"
+		(( use_custom_staging_patch == 1 )) && swbs_apply "$custom_staging_patch_dir"
+		swbb_prepare wine-pba
+		swbs_apply "$build_dir/wine-pba/patches"
+		(( use_custom_pba_patch == 1 )) && swbs_apply "$custom_pba_patch_dir"
+		;;
+	wine-pba-firerat)
+		swbb_prepare wine
+		(( use_custom_wine_patch == 1 )) && swbs_apply "$custom_wine_patch_dir"
+		swbb_prepare wine-staging
+		swbs_apply "$build_dir/wine-staging/patches"
+		(( use_custom_staging_patch == 1 )) && swbs_apply "$custom_staging_patch_dir"
+		swbb_prepare wine-pba-firerat
+		swbs_apply "$build_dir/wine-pba-firerat/patches"
+		(( use_custom_firerat_pba_patch == 1 )) && swbs_apply "$custom_firerat_pba_patch_dir"
+		;;
+	*)
+		swbb_error "unknown value in '$branch'"
+		;;
+esac
+
+## configure MODIFY ME!
+cd "$build_dir/wine"
+mkdir -p 64build && cd 64build
+../configure "${configure_64_args[@]}"
+#echo "${configure_64_args[@]}" | xargs ../configure
+echo 'DONE: 64bit configure, continue to 32bit configure?'
+swbs_pause
+
+cd "$build_dir/wine"
+mkdir -p 32build && cd 32build
+../configure "${configure_32_args[@]}"
+#echo "${configure_32_args[@]}" | xargs ../configure
+echo 'DONE: 32bit configure. Ready to build?'
+swbs_pause
+
+# make
+time1=$( date '+%T' )
+cd "$build_dir/wine/64build" && make "-j$jobs"
+cd "$build_dir/wine/32build" && make "-j$jobs"
+time2=$( date '+%T' )
+
+# install, need sudo
+[ -d "$install_dir" ] && rm -rf "$install_dir"
+mkdir -p "$install_dir"
+
+cd "$build_dir/wine/64build"
+sudo make install-lib
+cd "$build_dir/wine/32build"
+sudo make install-lib
+
+sudo chown -hR "$( whoami )" "$install_dir"
+# from Frogging-Family/wine-tkg-git https://github.com/Frogging-Family/wine-tkg-git/blob/master/wine-tkg-git/wine-tkg-scripts/build.sh
+cd "$install_dir" && find . -depth -type f \( -iname '*.exe' -o -iname '*.dll' -o -iname '*.so' \) -print0 | xargs -0 strip --strip-unneeded
+sed -i 's/winemenubuilder.exe -a -r/winemenubuilder.exe -r/g' "$install_dir"/share/wine/wine.inf
+sed -i 's|    LicenseInformation|    LicenseInformation,\\\n    FileOpenAssociations|g;$a \\n[FileOpenAssociations]\nHKCU,Software\\Wine\\FileOpenAssociations,"Enable",,"N"' "$install_dir"/share/wine/wine.inf
+
+sudo sync && rm -rf "$build_dir"
+echo "compile start: $time1"
+echo "compile end:   $time2"
+printf 'Installed to %s\n' "$install_dir"
+#}
