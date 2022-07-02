@@ -2,7 +2,7 @@
 set -e
 
 # simple wine build script (SWBS)
-SWBS_VERSION=0.9.0
+SWBS_VERSION=0.9.1
 
 ########################################
 #         user settings                #
@@ -79,7 +79,7 @@ else
 	dir_name="$branch-${wine_gitrev#wine-}"
 fi
 ts="$(date +%Y%m%d_%H%M%S)"
-build_dir="$(readlink -m "$git_dir/../../tmp/$dir_name")"
+build_dir="$(readlink -m "$git_dir/../../tmp/$branch")"
 install_dir="$(readlink -m "$git_dir/../../$ts/$dir_name")"
 
 configure_32_args=(PKG_CONFIG_PATH=/usr/lib --with-wine64=../64build --prefix="$install_dir")
