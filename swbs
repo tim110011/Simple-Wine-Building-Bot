@@ -2,19 +2,19 @@
 set -e
 
 # simple wine build script (SWBS)
-SWBS_VERSION=0.9.1
+SWBS_VERSION=0.9.2
 
 ########################################
 #         user settings                #
 ########################################
 
 git_dir="/mnt/hd/me/git_local/wines"
-branch='wine-staging'							# [ wine, wine-staging, wine-pba, wine-pba-firerat ] Also use as dir name for source and built binary. wine-stagingpba-firerat: `staging with pba` by firerat. wine-pba-firerat: Use pba patch by firerat on official staging
-wine_gitrev='wine-7.11'							# [ tag, commit hash ] see git tag -l
-staging_gitrev='v7.11'
+branch='wine'									# [ wine, wine-staging, wine-pba, wine-pba-firerat ] Also use as dir name for source and built binary. wine-stagingpba-firerat: `staging with pba` by firerat. wine-pba-firerat: Use pba patch by firerat on official staging
+wine_gitrev='wine-7.15'						# [ tag, commit hash ] see git tag -l
+staging_gitrev='v7.15'
 check_update=1								# check official repo for update
-allow_pause=1								# pause process after each step to see terminal output
-jobs=$(($(nproc)+0))						# make parallel execution jobs
+allow_pause=1									# pause process after each step to see terminal output
+jobs=$(($(nproc)+0))							# make parallel execution jobs
 
 # configure args from wine-2.0 to wine 7.x
 configure_custom_args=(\
@@ -82,7 +82,7 @@ ts="$(date +%Y%m%d_%H%M%S)"
 build_dir="$(readlink -m "$git_dir/../../tmp/$branch")"
 install_dir="$(readlink -m "$git_dir/../../$ts/$dir_name")"
 
-configure_32_args=(PKG_CONFIG_PATH=/usr/lib --with-wine64=../64build --prefix="$install_dir")
+configure_32_args=(PKG_CONFIG_PATH=/usr/lib/pkgconfig --with-wine64=../64build --prefix="$install_dir")
 configure_64_args=(--enable-win64 --prefix="$install_dir")
 configure_32_args+=("${configure_custom_args[@]}")
 configure_64_args+=("${configure_custom_args[@]}")
